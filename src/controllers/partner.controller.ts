@@ -1,16 +1,5 @@
-/**
- * Controller de Parceiros
- * 
- * Implementar endpoints:
- * 1. POST /partners - Criar parceiro
- * 2. GET /partners/:id - Buscar parceiro por ID
- * 3. GET /partners/search - Busca geoespacial:
- *    - Encontrar parceiro mais próximo que cubra a localização
- *    - Usar queries geoespaciais do MongoDB
- */
-
 import { Request, Response } from 'express';
-import PartnerService from '../services/PartnerService';
+import PartnerService from '../services/partner.service';
 import { PartnerNotFoundError, ValidationError } from '../utils/errors';
 
 class PartnerController {
@@ -28,10 +17,19 @@ class PartnerController {
     }
   }
 
+  static async getAllPartners(_req: Request, res: Response): Promise<void> {
+    try {
+      const partners = await PartnerService.findAll();
+      res.json(partners);
+    } catch (error) {
+      console.error('Error getting partners:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
   static async getPartnerById(req: Request, res: Response): Promise<void> {
     try {
-      const { id } = req.params;
-      const partner = await PartnerService.getPartnerById(id);
+      const partner = await PartnerService.getPartnerById(req.params.id);
       res.json(partner);
     } catch (error) {
       if (error instanceof PartnerNotFoundError) {
@@ -43,29 +41,20 @@ class PartnerController {
     }
   }
 
-  static async findAll(_req: Request, res: Response): Promise<void> {
-    try {
-      const partners = await PartnerService.findAll();
-      res.json(partners);
-    } catch (error) {
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  }
-
   static async findNearestPartner(req: Request, res: Response): Promise<void> {
     try {
-      const { lat, long } = req.query;
+      const { lat, lng } = req.query;
       
-      if (!lat || !long) {
-        res.status(400).json({ error: 'Missing latitude or longitude parameters' });
+      if (!lat || !lng) {
+        res.status(400).json({ error: 'Latitude and longitude are required' });
         return;
       }
 
-      const latitude = Number(lat);
-      const longitude = Number(long);
+      const latitude = parseFloat(lat as string);
+      const longitude = parseFloat(lng as string);
 
       if (isNaN(latitude) || isNaN(longitude)) {
-        res.status(400).json({ error: 'Invalid coordinates format' });
+        res.status(400).json({ error: 'Invalid latitude or longitude' });
         return;
       }
 

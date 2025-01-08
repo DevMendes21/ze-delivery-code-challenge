@@ -13,11 +13,22 @@
  *    - Receber query params: lat e long
  */
 
-const router = require('express').Router();
-const PartnerController = require('../controllers/PartnerController');
+import { Router } from 'express';
+import PartnerController from '../controllers/partner.controller';
+import { validateCreatePartner } from '../middlewares/validation.middleware';
 
-router.post('/partners', PartnerController.createPartner);
-router.get('/partners/:id', PartnerController.getPartnerById);
-router.get('/partners/search', PartnerController.searchNearestPartner);
+const router = Router();
 
-module.exports = router;
+// Create a new partner
+router.post('/', validateCreatePartner, PartnerController.createPartner);
+
+// Get all partners
+router.get('/', PartnerController.getAllPartners);
+
+// Find nearest partner
+router.get('/search', PartnerController.findNearestPartner);
+
+// Get partner by ID
+router.get('/:id', PartnerController.getPartnerById);
+
+export default router;
